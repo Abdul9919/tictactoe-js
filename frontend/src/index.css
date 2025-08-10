@@ -1,1 +1,7 @@
-@import "tailwindcss"
+@import "tailwindcss";
+
+/* Root element styles */
+#root {
+    margin: 0;
+    padding: 0;
+}
