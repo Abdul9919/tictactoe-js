@@ -1,7 +1,7 @@
 import React from "react";
 import SocketContext from "../Contexts/SocketContext";
 
-const TicTacToeBoard = ({ board, setBoard, playerSign, room }) => {
+const TicTacToeBoard = ({ board, setBoard, playerSign, room, turn, setTurn }) => {
   const socket = React.useContext(SocketContext);
 
   const handleClick = (index) => {
@@ -10,10 +10,14 @@ const TicTacToeBoard = ({ board, setBoard, playerSign, room }) => {
 
     // Place *your* move as 1 (server flips 1↔2 for the other player)
     const newBoard = [...board];
-    newBoard[index] = 1;
+    if(turn === 1) {
+      newBoard[index] = 1;
+      setBoard(newBoard);
+      socket.emit("updateBoard", { board: newBoard, room });
+      socket.emit('getTurn', { turn, room });
+    }
 
-    setBoard(newBoard);
-    socket.emit("updateBoard", { board: newBoard, room });
+    return
   };
 
   // Helper to render correctly based on playerSign and cell value

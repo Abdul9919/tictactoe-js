@@ -38,7 +38,8 @@ io.on('connection', (socket) => {
             rooms.get(roomName).push({ player: socket.id, playerSign: 'x' });
             socket.join(roomName);
             io.to(socket.id).emit('x', 'x');
-            socket.emit('joinedRoom', { roomName, socketId: socket.id });
+            const players = rooms.get(roomName).map(m => m.player);
+            io.to(players).emit('joinedRoom', { roomName, socketId: socket.id });
             console.log(`${socket.id} joined room: ${roomName}`);
         }
     });
@@ -78,7 +79,20 @@ io.on('connection', (socket) => {
         }
 
         // Send updated board only to the other player
-        socket.to(otherPlayer.player).emit('boardUpdated', { board, room });
+        socket.to(otherPlayer.player).emit('boardUpdated', { board, room});
+    });
+
+    socket.on('getTurn', ({turn, room}) => {
+
+        const otherPlayer = rooms.get(room).find(m => m.player !== socket.id);
+        if(turn === 1) {
+            io.to(socket.id).emit('turnChanged', { turn: 2 });
+            io.to(otherPlayer.player).emit('turnChanged', { turn: 1 });
+        } else if(turn === 2) {
+            io.to(socket.id).emit('turnChanged', { turn: 1 });
+            io.to(otherPlayer.player).emit('turnChanged', { turn: 2 });
+        }
+        return;
     });
 
     // Disconnect
