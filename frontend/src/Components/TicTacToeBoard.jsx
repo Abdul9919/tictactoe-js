@@ -1,16 +1,27 @@
 import React from "react";
+import SocketContext from "../Contexts/SocketContext";
 
-const TicTacToeBoard = ({ setCurrentTurn, currentTurn,board, setBoard }) => {
+const TicTacToeBoard = ({ board, setBoard, playerSign, room }) => {
+  const socket = React.useContext(SocketContext);
+
   const handleClick = (index) => {
-    if(currentTurn === 1){
-      const newBoard = [...board];
-      newBoard[index] = newBoard[index] === 0 ? 1 : 0;
-  
-      setBoard(newBoard);
-      setCurrentTurn((prev) => (prev === 1 ? 2 : 1));
-      console.log("Board updated:", newBoard);
-      
-    }
+    // Don't allow playing on an occupied cell
+    if (board[index] !== 0) return;
+
+    // Place *your* move as 1 (server flips 1↔2 for the other player)
+    const newBoard = [...board];
+    newBoard[index] = 1;
+
+    setBoard(newBoard);
+    socket.emit("updateBoard", { board: newBoard, room });
+  };
+
+  // Helper to render correctly based on playerSign and cell value
+  const renderCell = (value) => {
+    if (value === 0) return "";
+    if (value === 1) return (playerSign || "").toUpperCase(); // your mark
+    // opponent's mark
+    return (playerSign || "").toLowerCase() === "x" ? "O" : "X";
   };
 
   return (
@@ -28,12 +39,10 @@ const TicTacToeBoard = ({ setCurrentTurn, currentTurn,board, setBoard }) => {
         {board.map((value, i) => (
           <div
             key={i}
-            className="flex items-center justify-center text-6xl font-bold text-[#5a3a00]"
+            className="flex items-center justify-center text-6xl font-bold text-[#5a3a00] cursor-pointer"
             onClick={() => handleClick(i)}
           >
-            {value === 1 && "O"}
-            {value === 2 && "X"}
-            {/* value === 0 → empty */}
+            {renderCell(value)}
           </div>
         ))}
       </div>

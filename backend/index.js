@@ -1,6 +1,6 @@
 const http = require('http');
 const express = require('express');
-const {Server} = require('socket.io');
+const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,60 +12,90 @@ const io = new Server(server, {
     }
 });
 
-const connectedUsers = new Map()
-
-const rooms = new Map()
+const rooms = new Map();
 
 io.on('connection', (socket) => {
-    console.log('A new socket has connected', socket.id)
+    console.log('A new socket connected:', socket.id);
 
-    socket.on('socketName', (data) => {
-        if(!connectedUsers.has(socket.id)){
-            connectedUsers.set(socket.id, data.name )
-            console.log(connectedUsers)
-        }
-    })
-
-    socket.on('createRoom', ({room, members}) => {
-        if (!rooms.has(room)){
-
-            rooms.set(room, members)
+    // Create room
+    socket.on('createRoom', ({ room }) => {
+        if (!rooms.has(room)) {
+            rooms.set(room, [{ player: socket.id, playerSign: 'o' }]);
         }
         socket.join(room);
-        console.log(`Room created: ${room} with members: ${members}`);
-    })
-    socket.on('searchRooms', (name) => {
-       io.to(socket.id).emit('rooms', [...rooms]);     
-     })
+        io.to(socket.id).emit('roomCreated', 'o');
+        console.log(`Room created: ${room}`, rooms.get(room));
+    });
 
-    socket.on('joinRoom', ({ roomName, name }) => {
-        if (rooms.has(roomName) && !rooms.get(roomName).includes(name)) {
-            rooms.get(roomName).push(name);
+    // Search rooms
+    socket.on('searchRooms', () => {
+        io.to(socket.id).emit('rooms', [...rooms]);
+    });
+
+    // Join room
+    socket.on('joinRoom', ({ roomName }) => {
+        if (rooms.has(roomName) && !rooms.get(roomName).some(m => m.player === socket.id)) {
+            rooms.get(roomName).push({ player: socket.id, playerSign: 'x' });
             socket.join(roomName);
-            socket.emit('joinedRoom', { roomName, name });
-            console.log(`${name} joined room: ${roomName}`);
+            io.to(socket.id).emit('x', 'x');
+            socket.emit('joinedRoom', { roomName, socketId: socket.id });
+            console.log(`${socket.id} joined room: ${roomName}`);
         }
     });
-    socket.on('leaveRoom', ({roomName}) => {
+
+    // Leave room
+    socket.on('leaveRoom', ({ roomName }) => {
         socket.leave(roomName);
         if (rooms.has(roomName)) {
             if (rooms.get(roomName).length === 1) {
                 rooms.delete(roomName);
             } else {
-                rooms.set(roomName, rooms.get(roomName).filter(member => member !== connectedUsers.get(socket.id)));
+                rooms.set(roomName, rooms.get(roomName).filter(m => m.player !== socket.id));
             }
-            console.log(`${connectedUsers.get(socket.id)} left room: ${roomName}`);
+            console.log(`${socket.id} left room: ${roomName}`);
         }
-    })
+    });
 
-    socket.on('updateBoard', ({board, room}) => {
-        socket.to(room).emit('boardUpdated', board);
-    })
- 
+    // Update board
+    socket.on('updateBoard', ({ board, room }) => {
+        // Swap 1 ↔ 2
+        for (let i = 0; i < board.length; i++) {
+            if (board[i] === 1) board[i] = 2;
+            else if (board[i] === 2) board[i] = 1;
+        }
+
+        const roomMembers = rooms.get(room);
+        if (!roomMembers) {
+            console.error(`Room ${room} not found`);
+            return;
+        }
+
+        // Find other player in the room
+        const otherPlayer = roomMembers.find(m => m.player !== socket.id);
+        if (!otherPlayer) {
+            console.error(`Other player not found in room ${room}`);
+            return;
+        }
+
+        // Send updated board only to the other player
+        socket.to(otherPlayer.player).emit('boardUpdated', { board, room });
+    });
+
+    // Disconnect
     socket.on('disconnect', () => {
-        connectedUsers.delete(socket.id);
-    })
+        // Clean up player from all rooms
+        for (let [roomName, members] of rooms.entries()) {
+            const filtered = members.filter(m => m.player !== socket.id);
+            if (filtered.length === 0) {
+                rooms.delete(roomName);
+            } else {
+                rooms.set(roomName, filtered);
+            }
+        }
+        console.log(`Socket disconnected: ${socket.id}`);
+    });
 });
+
 server.listen(5000, "0.0.0.0", () =>
-  console.log("Server is listening on port 5000")
+    console.log("Server is listening on port 5000")
 );

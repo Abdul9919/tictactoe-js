@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import homeBg from '../../assets/home-bg.jpeg'
-import NameField from '../nameField'
+import NameField from '../NameField'
 import Footer from '../Footer'
 import RoomsList from '../RoomsList'
 import SocketContext from '../../Contexts/SocketContext'
 const Home = () => {
 
-  const [name, setName] = useState('')
+ // const [name, setName] = useState('')
   const [roomName, setRoomName] = useState('')
   const [rooms, setRooms] = useState([])
   const socket = React.useContext(SocketContext)
@@ -30,7 +30,7 @@ const Home = () => {
 
         {/* Header */}
         <header>
-          <NameField name={name} setName={setName} /> 
+          {/* <NameField  />  */}
         </header>
         <div className="flex flex-col mb-4">
           <button
@@ -40,12 +40,12 @@ const Home = () => {
             🔍 Search Room
           </button>
           {rooms.length === 0 ? <span className='my-4 ml-auto mr-auto'>No rooms Available</span> : (
-            <RoomsList rooms={rooms} name={name} />
+            <RoomsList rooms={rooms} />
           )}
         </div>
         {/* Footer pinned to bottom */}
         <footer className="mt-auto">
-          <Footer roomName={roomName} name={name} setRoomName={setRoomName} />
+          <Footer roomName={roomName} setRoomName={setRoomName} />
         </footer>
       </div>
     </div>
