@@ -6,12 +6,13 @@ const SocketContext = createContext(null);
 
 // Create the provider
 export const SocketProvider = ({ children }) => {
+  const serverUrl = import.meta.env.VITE_SERVER_URL;
   const socket = useMemo(
     () =>
-      io('http://192.168.18.41:5000', {
+      io(serverUrl, {
         transports: ['websocket'],
       }),
-    []
+    [serverUrl]
   );
 
   return (
