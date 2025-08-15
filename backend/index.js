@@ -59,11 +59,21 @@ io.on('connection', (socket) => {
 
     // Update board
     socket.on('updateBoard', ({ board, room }) => {
-        // Swap 1 ↔ 2
-        for (let i = 0; i < board.length; i++) {
-            if (board[i] === 1) board[i] = 2;
-            else if (board[i] === 2) board[i] = 1;
-        }
+        const players = rooms.get(room).map(m => m.player);
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // cols
+            [0, 4, 8], [2, 4, 6] // diagonals
+        ];
+         
+
+
+        console.log(board);
+        // No winner → proceed
+        // for (let i = 0; i < board.length; i++) {
+        //     if (board[i] === 1) board[i] = 2;
+        //     else if (board[i] === 2) board[i] = 1;
+        // }
 
         const roomMembers = rooms.get(room);
         if (!roomMembers) {
@@ -71,26 +81,36 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Find other player in the room
         const otherPlayer = roomMembers.find(m => m.player !== socket.id);
         if (!otherPlayer) {
             console.error(`Other player not found in room ${room}`);
-            return;
+            return; 
         }
-
-        // Send updated board only to the other player
-        socket.to(otherPlayer.player).emit('boardUpdated', { board, room});
+        
+        for (const [a, b, c] of winPatterns) {
+            if (board[a] === 'O' && board[b] === 'O' && board[c] === 'O') {
+                io.to(players).emit('gameWon', { player: 'o' });
+                console.log('Player o has won the game!');
+            } else if (board[a] === 'X' && board[b] === 'X' && board[c] === 'X') {
+                io.to(players).emit('gameWon', { player: 'x' });
+                console.log('Player x has won the game!');
+            }
+        }
+        
+        socket.to(otherPlayer.player).emit('boardUpdated', { board, room });
     });
 
-    socket.on('getTurn', ({turn, room}) => {
+
+
+
+
+    socket.on('getTurn', ({ turn, room }) => {
 
         const otherPlayer = rooms.get(room).find(m => m.player !== socket.id);
-        if(turn === 1) {
-            io.to(socket.id).emit('turnChanged', { turn: 2 });
-            io.to(otherPlayer.player).emit('turnChanged', { turn: 1 });
-        } else if(turn === 2) {
-            io.to(socket.id).emit('turnChanged', { turn: 1 });
-            io.to(otherPlayer.player).emit('turnChanged', { turn: 2 });
+        if (turn === 'o') {
+            if (otherPlayer) io.to([otherPlayer.player,socket.id]).emit('turnChanged', { turn: 'x' });
+        } else if (turn === 'x') {
+            if (otherPlayer) io.to([otherPlayer.player,socket.id]).emit('turnChanged', { turn: 'o' });
         }
         return;
     });
