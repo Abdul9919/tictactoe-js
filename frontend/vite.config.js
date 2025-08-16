@@ -8,6 +8,9 @@ export default defineConfig({
   server: {
         host: '0.0.0.0', // Listen on all network interfaces
         // Or, use true to listen on all addresses, including LAN and public addresses
-        // host: true, 
+        // host: true,
+        allowedHosts: [
+      'beginning-folks-permits-funk.trycloudflare.com'
+    ] 
       },
 })
