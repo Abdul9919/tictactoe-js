@@ -44,7 +44,7 @@ const Room = () => {
 
   // Heading while waiting
   useEffect(() => {
-    if (isWaiting) {
+    if (isWaiting && !wonRef.current) {
       setHeading(`waiting for player${dots}`);
     }
   }, [dots, isWaiting]);
@@ -57,22 +57,25 @@ const Room = () => {
       if (r !== roomName) return;
       const normalized = sign ? sign.toLowerCase() : "";
       setPlayerSign(normalized);
-      // If we join and there's already a turn, show appropriate heading
-      if (turnRef.current && normalized) {
-        if (turnRef.current === normalized) setHeading(`Your turn: ${turnRef.current.toUpperCase()}`);
-        else setHeading(`Turn: ${turnRef.current.toUpperCase()}`);
+      if (turnRef.current && normalized && !wonRef.current) {
+        if (turnRef.current === normalized) {
+          setHeading(`Your turn: ${turnRef.current.toUpperCase()}`);
+        } else {
+          setHeading(`Turn: ${turnRef.current.toUpperCase()}`);
+        }
       }
     };
 
     const handleJoined = ({ roomName: rName, players }) => {
       if (rName !== roomName) return;
       setIsWaiting(false);
-      // optional: use players array to set anything if needed
       const currentTurn = turnRef.current;
-      if (playerSignRef.current && currentTurn === playerSignRef.current) {
-        setHeading(`Your turn: ${currentTurn.toUpperCase()}`);
-      } else {
-        setHeading(`Turn: ${currentTurn.toUpperCase()}`);
+      if (!wonRef.current) {
+        if (playerSignRef.current && currentTurn === playerSignRef.current) {
+          setHeading(`Your turn: ${currentTurn.toUpperCase()}`);
+        } else {
+          setHeading(`Turn: ${currentTurn.toUpperCase()}`);
+        }
       }
     };
 
@@ -84,18 +87,24 @@ const Room = () => {
       if (wonRef.current) return;
       setIsWaiting(false);
       setTurn(newTurn);
-      if (playerSignRef.current && newTurn === playerSignRef.current) {
-        setHeading(`Your turn: ${newTurn.toUpperCase()}`);
-      } else {
-        setHeading(`Turn: ${newTurn.toUpperCase()}`);
+      if (!wonRef.current) {
+        if (playerSignRef.current && newTurn === playerSignRef.current) {
+          setHeading(`Your turn: ${newTurn.toUpperCase()}`);
+        } else {
+          setHeading(`Turn: ${newTurn.toUpperCase()}`);
+        }
       }
     };
 
     const handleGameWon = (payload) => {
+      // lock immediately
+      wonRef.current = true;
+      setWon(true);
       const winner = (payload && (payload.player || payload.winner)) || turnRef.current;
       const label = typeof winner === "string" && winner.length === 1 ? winner.toUpperCase() : winner;
-      setWon(true);
+      console.log(`Player ${label} has won`);
       setHeading(`${label} has won the game`);
+      setTurn("");
     };
 
     socket.on("playerAssigned", handlePlayerAssigned);
@@ -104,8 +113,8 @@ const Room = () => {
     socket.on("turnChanged", handleTurnChanged);
     socket.on("gameWon", handleGameWon);
 
-    // Ask server what our sign is (useful if we navigated directly or missed the initial emit)
-    socket.emit('requestPlayerSign', { room: roomName });
+    // Ask server what our sign is
+    socket.emit("requestPlayerSign", { room: roomName });
 
     return () => {
       socket.off("playerAssigned", handlePlayerAssigned);
