@@ -129,6 +129,20 @@ io.on('connection', (socket) => {
     return;
   });
 
+
+  socket.on('playAgain', ({roomName, agreedPlayers}) => {
+    console.log('game was voted to be played again')
+    const roomMembers = rooms.get(roomName);
+    if (!roomMembers) return;
+    const otherPlayer = rooms.get(roomName).find(m => m.player !== socket.id);
+    io.to([otherPlayer.player, socket.id]).emit('playAgain', {agreedPlayers });
+    // If all players agreed, reset the game
+    if (agreedPlayers.length === roomMembers.length) {
+      const newBoard = Array(9).fill(0);
+      io.to([otherPlayer.player, socket.id]).emit('resetGame', { board: newBoard });
+    }
+  });
+
   // Disconnect cleanup
   socket.on('disconnect', () => {
     for (let [roomName, members] of rooms.entries()) {

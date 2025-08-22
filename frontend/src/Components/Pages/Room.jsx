@@ -5,6 +5,7 @@ import RoomHeader from "../RoomHeader";
 import TicTacToeBoard from "../TicTacToeBoard";
 import ChatBox from "../ChatBox";
 import SocketContext from "../../Contexts/SocketContext";
+import PlayAgain from "../PlayAgain";
 
 const Room = () => {
   const { roomName } = useParams();
@@ -20,7 +21,7 @@ const Room = () => {
   const [heading, setHeading] = useState("");
   const [dots, setDots] = useState("");
   const [isWaiting, setIsWaiting] = useState(true);
-
+  const [playAgain, setPlayAgain] = useState(false);
   const socket = useContext(SocketContext);
 
   // refs to hold latest values for event handlers (avoid stale closures)
@@ -97,14 +98,20 @@ const Room = () => {
     };
 
     const handleGameWon = (payload) => {
-      // lock immediately
+      if (wonRef.current) return; // prevent multiple triggers
       wonRef.current = true;
       setWon(true);
+
       const winner = (payload && (payload.player || payload.winner)) || turnRef.current;
       const label = typeof winner === "string" && winner.length === 1 ? winner.toUpperCase() : winner;
       console.log(`Player ${label} has won`);
       setHeading(`${label} has won the game`);
       setTurn("");
+
+      // show PlayAgain after 2s only once
+      setTimeout(() => {
+        setPlayAgain(true);
+      }, 2000);
     };
 
     socket.on("playerAssigned", handlePlayerAssigned);
@@ -139,6 +146,7 @@ const Room = () => {
         />
       </div>
       <ChatBox />
+      {playAgain && <PlayAgain setPlayAgain={setPlayAgain} setBoard={setBoard} setTurn={setTurn} wonRef={wonRef} />}
     </div>
   );
 };
