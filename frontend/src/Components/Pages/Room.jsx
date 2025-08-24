@@ -114,6 +114,21 @@ const Room = () => {
       }, 2000);
     };
 
+    const handleGameDraw = () => {
+      if (wonRef.current) return;
+      setWon(true);
+      console.log('Game ended in a draw');
+      setHeading('Game ended in a draw');
+      setTurn("");
+
+      // show PlayAgain after 2s only once
+      setTimeout(() => {
+        setPlayAgain(true);
+      }, 2000);
+    };
+
+    
+    socket.on('gameDraw', handleGameDraw)
     socket.on("playerAssigned", handlePlayerAssigned);
     socket.on("joinedRoom", handleJoined);
     socket.on("boardUpdated", handleBoardUpdated);

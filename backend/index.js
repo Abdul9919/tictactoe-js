@@ -86,6 +86,7 @@ io.on('connection', (socket) => {
   // Update board (unchanged but kept for context)
   socket.on('updateBoard', ({ board, room }) => {
     const players = rooms.get(room).map(m => m.player);
+    let win = false
     const winPatterns = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
       [0, 3, 6], [1, 4, 7], [2, 5, 8], // cols
@@ -100,7 +101,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const otherPlayer = roomMembers.find(m => m.player !== socket.id);
+    const otherPlayer = roomMembers.find(m => m.player !== socket.id); 
     if (!otherPlayer) {
       console.error(`Other player not found in room ${room}`);
       return;
@@ -110,10 +111,17 @@ io.on('connection', (socket) => {
       if (board[a] === 'O' && board[b] === 'O' && board[c] === 'O') {
         io.to(players).emit('gameWon', { player: 'o' });
         console.log('Player o has won the game!');
+        win = true
       } else if (board[a] === 'X' && board[b] === 'X' && board[c] === 'X') {
         io.to(players).emit('gameWon', { player: 'x' });
         console.log('Player x has won the game!');
+        win = true
       }
+    }
+
+    if(!board.includes(0) && win === false) {
+      io.to(players).emit('gameDraw');
+      console.log('Game ended in a draw');
     }
 
     socket.to(otherPlayer.player).emit('boardUpdated', { board, room });
