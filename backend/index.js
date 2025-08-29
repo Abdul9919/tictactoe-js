@@ -49,7 +49,7 @@ io.on('connection', (socket) => {
       // Broadcast joinedRoom with players and their signs
       const playersInfo = rooms.get(roomName).map(m => ({ socketId: m.player, playerSign: m.playerSign }));
       const players = rooms.get(roomName).map(m => m.player);
-      io.to(players).emit('joinedRoom', { roomName, players: playersInfo });
+      io.to(players).emit('joinedRoom', { roomName, players: playersInfo, board: Array(9).fill(0) });
 
       console.log(`${socket.id} joined room: ${roomName}`, playersInfo);
     }
@@ -85,7 +85,11 @@ io.on('connection', (socket) => {
 
   // Update board (unchanged but kept for context)
   socket.on('updateBoard', ({ board, room }) => {
-    const players = rooms.get(room).map(m => m.player);
+    let players;
+    if (rooms.has(room)) {
+      players = rooms.get(room).map(m => m.player);
+
+    }
     let win = false
     const winPatterns = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
@@ -101,7 +105,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const otherPlayer = roomMembers.find(m => m.player !== socket.id); 
+    const otherPlayer = roomMembers.find(m => m.player !== socket.id);
     if (!otherPlayer) {
       console.error(`Other player not found in room ${room}`);
       return;
@@ -119,7 +123,7 @@ io.on('connection', (socket) => {
       }
     }
 
-    if(!board.includes(0) && win === false) {
+    if (!board.includes(0) && win === false) {
       io.to(players).emit('gameDraw');
       console.log('Game ended in a draw');
     }
@@ -138,12 +142,12 @@ io.on('connection', (socket) => {
   });
 
 
-  socket.on('playAgain', ({roomName, agreedPlayers}) => {
+  socket.on('playAgain', ({ roomName, agreedPlayers }) => {
     console.log('game was voted to be played again')
     const roomMembers = rooms.get(roomName);
     if (!roomMembers) return;
     const otherPlayer = rooms.get(roomName).find(m => m.player !== socket.id);
-    io.to([otherPlayer.player, socket.id]).emit('playAgain', {agreedPlayers });
+    io.to([otherPlayer.player, socket.id]).emit('playAgain', { agreedPlayers });
     // If all players agreed, reset the game
     if (agreedPlayers.length === roomMembers.length) {
       const newBoard = Array(9).fill(0);
@@ -158,7 +162,7 @@ io.on('connection', (socket) => {
       if (filtered.length === 0) {
         rooms.delete(roomName);
       } else {
-        rooms.set(roomName, filtered); 
+        rooms.set(roomName, filtered);
       }
     }
     console.log(`Socket disconnected: ${socket.id}`);

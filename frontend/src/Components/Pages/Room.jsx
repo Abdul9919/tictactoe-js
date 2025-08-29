@@ -67,9 +67,10 @@ const Room = () => {
       }
     };
 
-    const handleJoined = ({ roomName: rName, players }) => {
+    const handleJoined = ({ roomName: rName, board }) => {
       if (rName !== roomName) return;
       setIsWaiting(false);
+      setBoard(board);
       const currentTurn = turnRef.current;
       if (!wonRef.current) {
         if (playerSignRef.current && currentTurn === playerSignRef.current) {
