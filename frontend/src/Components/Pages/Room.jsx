@@ -9,10 +9,9 @@ import PlayAgain from "../PlayAgain";
 
 const Room = () => {
   const { roomName } = useParams();
-
   const [board, setBoard] = useState(Array(9).fill(0));
   // playerSign now comes from server ('' until server assigns)
-  const [playerSign, setPlayerSign] = useState("");
+  const [playerSign, setPlayerSign] = useState(roomName === 'ai' ? 'o' : '');
 
   const [turn, setTurn] = useState("o");
   const [won, setWon] = useState(false);
@@ -20,7 +19,7 @@ const Room = () => {
   // UI state
   const [heading, setHeading] = useState("");
   const [dots, setDots] = useState("");
-  const [isWaiting, setIsWaiting] = useState(true);
+  const [isWaiting, setIsWaiting] = useState(roomName.toString() === 'ai' ? false : true);
   const [playAgain, setPlayAgain] = useState(false);
   const socket = useContext(SocketContext);
 
@@ -29,6 +28,13 @@ const Room = () => {
   const wonRef = useRef(won);
   const playerSignRef = useRef(playerSign);
   const isWaitingRef = useRef(isWaiting);
+
+  useEffect(() => {
+    if(roomName === 'ai') {
+      setTurn("o");
+      setIsWaiting(false);
+    }
+  },[])
 
   useEffect(() => { turnRef.current = turn; }, [turn]);
   useEffect(() => { wonRef.current = won; }, [won]);
@@ -155,7 +161,7 @@ const Room = () => {
         <TicTacToeBoard
           board={board}
           setBoard={setBoard}
-          playerSign={playerSign}
+          playerSign={playerSignRef.current}
           room={roomName}
           turn={turn}
           setTurn={setTurn}

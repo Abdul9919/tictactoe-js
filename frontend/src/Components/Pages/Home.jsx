@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import homeBg from '../../assets/home-bg.jpeg'
-import NameField from '../NameField'
 import Footer from '../Footer'
 import RoomsList from '../RoomsList'
 import SocketContext from '../../Contexts/SocketContext'
+import {useNavigate} from 'react-router-dom'
 const Home = () => {
 
  // const [name, setName] = useState('')
   const [roomName, setRoomName] = useState('')
   const [rooms, setRooms] = useState([])
   const socket = React.useContext(SocketContext)
+  const navigate = useNavigate()
   useEffect(() => {
     socket.on('rooms', (rooms) => {
       console.log(rooms);
@@ -33,9 +34,14 @@ const Home = () => {
           {/* <NameField  />  */}
         </header>
         <div className="flex flex-col mb-4">
+          <button onClick={() => navigate('/room/ai')} className='bg-[#ac7002] text-white font-bold py-4 mx-[25%] mb-4 rounded-xl shadow-md transition-all duration-200 ease-in-out
+           hover:bg-[#dd9206] hover:shadow-lg active:scale-95'>
+            Play Against AI
+          </button>
           <button
             onClick={() => socket.emit('searchRooms')}
-            className="bg-[#895b03] text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all duration-200 ease-in-out hover:bg-[#a86f04] hover:shadow-lg active:scale-95"
+            className="bg-[#895b03] text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all duration-200 ease-in-out
+             hover:bg-[#a86f04] hover:shadow-lg active:scale-95"
           >
             🔍 Search Room
           </button>

@@ -1,11 +1,17 @@
 // server.js (only the socket-related parts shown/modified)
 const http = require('http');
 const express = require('express');
+const cors = require('cors');
 const { Server } = require('socket.io');
 require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
+const corsOptions = {
+  origin : process.env.CLIENT_URL,
+  methods: ['GET', 'POST'],
+  credentials: true 
+}
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL,
@@ -14,7 +20,30 @@ const io = new Server(server, {
   }
 });
 
+app.use(express.json());
 const rooms = new Map();
+app.use(cors(corsOptions))
+let latest = null
+
+app.post('/test', async (req, res) => {
+  try {
+    const { board } = req.body
+    console.log(board);
+    latest = board
+    res.status(200).json({ message: 'Board received' });
+  } catch (error) {
+    console.error('Error processing board:', error);
+  }
+
+})
+
+app.get('/latest', (req, res) => {
+  try {
+      res.status(200).json({ board: latest });
+  } catch (error) {
+    console.log(error)
+  }
+});
 
 io.on('connection', (socket) => {
   console.log('A new socket connected:', socket.id);
