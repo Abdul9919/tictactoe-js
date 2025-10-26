@@ -2,19 +2,27 @@ import React, { useState } from "react";
 import SocketContext from "../Contexts/SocketContext";
 import axios from "axios";
 
-const TicTacToeBoard = ({ board, setBoard, playerSign, room, turn, setTurn }) => {
+const TicTacToeBoard = ({ board, setBoard, playerSign, room, turn, setTurn, setWon, wonRef, setPlayAgain }) => {
   const socket = React.useContext(SocketContext);
   const [animatedCells, setAnimatedCells] = useState([]); // Track which cells should animate
 
   const webhook = async (newBoard) => {
     try {
-      const response = await axios.post("http://192.168.18.41:5678/webhook/330b6a84-108d-4986-8579-c9405b85ddca", {
+      const response = await axios.post("http://141.145.159.42:5678/webhook/330b6a84-108d-4986-8579-c9405b85ddca", {
         board: [...newBoard],
       });
       console.log('n8n response',response.data)
       setTurn('o')
       const updatedBoard = response.data.board.split(",").map(e => e === "0" ? 0 : e);
       setBoard(updatedBoard);
+      if(response.data.win) {
+        wonRef.current = true;
+        setWon(true)
+        setPlayAgain(true)
+      }
+      if(!updatedBoard.includes(0) && !response.data.win) {
+        setPlayAgain(true)
+      }
       
     } catch (error) {
       console.log("AI move error:", error);

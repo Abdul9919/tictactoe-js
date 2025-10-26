@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import SocketContext from "../Contexts/SocketContext";
 
-const PlayAgain = ({ setPlayAgain, setBoard, setTurn, wonRef }) => {
+const PlayAgain = ({ setPlayAgain, setBoard, setTurn, wonRef, room }) => {
   const socket = React.useContext(SocketContext);
   const { roomName } = useParams();
   const countdown = useRef(20);
@@ -58,6 +58,15 @@ const PlayAgain = ({ setPlayAgain, setBoard, setTurn, wonRef }) => {
   };
 
   const onAccept = () => {
+
+    if(room === 'ai') {
+      setBoard(Array(9).fill(0))
+      setTurn('O')
+      setPlayAgain(false)
+      wonRef.current = false;
+      return;
+    }  
+
     // Add myself to local list
     setAgreedPlayers((prev) =>
       prev.includes(socket.id) ? prev : [...prev, socket.id]

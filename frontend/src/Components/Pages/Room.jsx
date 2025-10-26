@@ -164,11 +164,14 @@ const Room = () => {
           playerSign={playerSignRef.current}
           room={roomName}
           turn={turn}
+          wonRef={wonRef}
+          setWon={setWon}
           setTurn={setTurn}
+          setPlayAgain={setPlayAgain}
         />
       </div>
       <ChatBox />
-      {playAgain && <PlayAgain setPlayAgain={setPlayAgain} setBoard={setBoard} setTurn={setTurn} wonRef={wonRef} />}
+      {playAgain && <PlayAgain setPlayAgain={setPlayAgain} setBoard={setBoard} setTurn={setTurn} wonRef={wonRef} room={roomName} />}
     </div>
   );
 };
